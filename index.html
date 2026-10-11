@@ -14,7 +14,7 @@ button:hover,.file:hover{background:#f0f4f8}.file input{display:none}
 .panel{background:white;border:1px solid #e1e6ed;border-radius:14px;padding:15px;min-width:0}
 #list{display:grid;gap:8px}.item{display:block;text-align:left;width:100%;white-space:normal}
 .item.active{background:#e8f2ff;border-color:#4b87d5}h2{font-size:1.2rem;line-height:1.5}
-pre{white-space:pre-wrap;overflow-wrap:anywhere;font:inherit;line-height:1.75;margin:14px 0}
+.article-body{line-height:1.9;overflow-wrap:anywhere;margin:18px 0}.article-body p{margin:0 0 1.2em;white-space:pre-wrap}.article-body h2{font-size:1.14rem;margin:1.9em 0 .7em;padding-bottom:.35em;border-bottom:1px solid #e1e6ed}.article-body h3{font-size:1.04rem;margin:1.5em 0 .5em}.article-body ul{padding-left:1.4em;line-height:1.9}
 .tag{display:inline-block;background:#eef1f5;border-radius:6px;padding:3px 7px;margin:3px;font-size:.8rem}
 .actions{display:flex;gap:8px;flex-wrap:wrap}
 @media(max-width:680px){.layout{grid-template-columns:1fr}.wrap{padding:14px}}
@@ -26,13 +26,30 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;font:inherit;line-height:1.75;ma
 <div class="layout"><section class="panel"><strong>記事一覧</strong><div id="list" style="margin-top:12px"></div></section>
 <article class="panel"><p class="muted" id="position">記事を選択してください</p><h2 id="title">まだ記事がありません</h2><p id="summary" class="muted"></p><div id="tags"></div>
 <div class="actions"><button id="copy" disabled>題名・本文・タグをコピー</button><button id="copyBody" disabled>本文のみコピー</button><button id="approve" disabled>確認済みにする（この端末のみ）</button></div>
-<pre id="body"></pre></article></div>
+<div id="body" class="article-body"></div></article></div>
 <p class="muted">確認済み表示はこのブラウザだけに保存されます。noteへは自動投稿しません。公開前に事実・著作権・重複を確認してください。</p>
 </div><script>
 let articles=[],selected=-1,identity="";
 const $=id=>document.getElementById(id);
 function reviewedKey(i){return "review:"+identity+":"+articles[i].id}
 function reviewed(i){return localStorage.getItem(reviewedKey(i))==="yes"}
+function renderArticle(markdown){
+ const root=$("body");root.replaceChildren();
+ const lines=String(markdown||"").replace(/\\r/g,"").split("\\n");
+ let block=[],list=null;
+ function paragraph(){if(!block.length)return;const p=document.createElement("p");p.textContent=block.join("\\n");root.append(p);block=[]}
+ function flushList(){list=null}
+ for(const line of lines){
+   const t=line.trim();
+   if(!t){paragraph();flushList();continue}
+   const heading=t.match(/^(#{1,3})\\s+(.+)$/);
+   if(heading){paragraph();flushList();const h=document.createElement(heading[1].length===1?"h2":heading[1].length===2?"h2":"h3");h.textContent=heading[2];root.append(h);continue}
+   const item=t.match(/^[-*]\\s+(.+)$/);
+   if(item){paragraph();if(!list){list=document.createElement("ul");root.append(list)}const li=document.createElement("li");li.textContent=item[1];list.append(li);continue}
+   flushList();block.push(line);
+ }
+ paragraph();
+}
 function render(){
   $("stats").textContent="全 "+articles.length+" 本 ／ 確認済み "+articles.filter((_,i)=>reviewed(i)).length+" 本";
   $("list").replaceChildren();
@@ -45,7 +62,7 @@ function render(){
   $("position").textContent=a?(selected+1)+" / "+articles.length:"記事を選択してください";
   $("title").textContent=a?.title||"まだ記事がありません";
   $("summary").textContent=a?.summary||"";
-  $("body").textContent=a?.body||"";
+  renderArticle(a?.body||"");
   $("tags").replaceChildren();
   (a?.tags||[]).forEach(tag=>{const s=document.createElement("span");s.className="tag";s.textContent="#"+tag;$("tags").append(s)});
   for(const id of ["copy","copyBody","approve"])$(id).disabled=!a;
