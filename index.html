@@ -35,16 +35,16 @@ function reviewedKey(i){return "review:"+identity+":"+articles[i].id}
 function reviewed(i){return localStorage.getItem(reviewedKey(i))==="yes"}
 function renderArticle(markdown){
  const root=$("body");root.replaceChildren();
- const lines=String(markdown||"").replace(/\\r/g,"").split("\\n");
+ const lines=String(markdown||"").replace(/\r/g,"").split("\n");
  let block=[],list=null;
- function paragraph(){if(!block.length)return;const p=document.createElement("p");p.textContent=block.join("\\n");root.append(p);block=[]}
+ function paragraph(){if(!block.length)return;const p=document.createElement("p");p.textContent=block.join("\n");root.append(p);block=[]}
  function flushList(){list=null}
  for(const line of lines){
    const t=line.trim();
    if(!t){paragraph();flushList();continue}
-   const heading=t.match(/^(#{1,3})\\s+(.+)$/);
+   const heading=t.match(/^(#{1,3})\s+(.+)$/);
    if(heading){paragraph();flushList();const h=document.createElement(heading[1].length===1?"h2":heading[1].length===2?"h2":"h3");h.textContent=heading[2];root.append(h);continue}
-   const item=t.match(/^[-*]\\s+(.+)$/);
+   const item=t.match(/^[-*]\s+(.+)$/);
    if(item){paragraph();if(!list){list=document.createElement("ul");root.append(list)}const li=document.createElement("li");li.textContent=item[1];list.append(li);continue}
    flushList();block.push(line);
  }
