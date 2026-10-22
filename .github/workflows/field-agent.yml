@@ -37,7 +37,12 @@ jobs:
       - name: Prove two-run state inheritance (no API)
         run: |
           mkdir -p "$RUNNER_TEMP/field-trial"
-          cp field_rules.py "$RUNNER_TEMP/field-trial/field_rules.py"
+          python3 - "$RUNNER_TEMP/field-trial/field_rules.py" <<'PY'
+          from pathlib import Path
+          import sys
+          from field_agent import rule_source
+          Path(sys.argv[1]).write_text(rule_source(1, 0), encoding='utf-8')
+          PY
           python3 field_agent.py --mode demo --root "$RUNNER_TEMP/field-trial"
           python3 field_agent.py --mode demo --root "$RUNNER_TEMP/field-trial"
           python3 - "$RUNNER_TEMP/field-trial/field_runs.json" <<'PY'
