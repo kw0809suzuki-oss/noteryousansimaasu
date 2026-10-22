@@ -1,0 +1,67 @@
+[
+  {
+    "timestamp": "2026-10-22T23:29:50.264730+00:00",
+    "mode": "live",
+    "objective": "外部の実装・失敗から学び、根拠を次の実行へ接続する",
+    "question": "How can we improve the reliability of LLMs in multi-turn conversations?",
+    "finding": "LLMs exhibit significantly lower performance and increased unreliability in multi-turn conversations compared to single-turn.",
+    "reason": "Since LLMs get lost in multi-turn dialogues and often make premature assumptions, implementing a mechanism for users to clarify or re-specify their requests after each turn may help improve understanding and reliability.",
+    "verified_sources": [
+      {
+        "url": "https://arxiv.org/abs/2505.06120",
+        "sha256": "355fd46185ccec7890f5e909eb6596b3bd298589e51979aff78a56edefdb684d"
+      }
+    ],
+    "active_before": {
+      "version": 1,
+      "minimum_verified_sources": 0,
+      "source_sha256": "107cdd8686481ad7ac214da22d35540b3191814060441df539f52f8a4cc7eb15"
+    },
+    "decision_before": "run_research_probe",
+    "candidate_minimum_verified_sources": 1,
+    "comparison": {
+      "cases": [
+        {
+          "name": "unverified",
+          "before": "run_research_probe",
+          "candidate": "read_primary_source"
+        },
+        {
+          "name": "primary_source_read",
+          "before": "run_research_probe",
+          "candidate": "run_research_probe"
+        }
+      ],
+      "invariants": {
+        "verified_source_still_allows_probe": true,
+        "unknown_source_requires_read": true
+      },
+      "changed_cases": [
+        "unverified"
+      ],
+      "passed": true
+    },
+    "adoption": "adopted",
+    "active_after": {
+      "version": 2,
+      "minimum_verified_sources": 1,
+      "source_sha256": "e14ee875c19dca745946f1c61e020a32beea852bd38b439bd55d5cfa6213f134"
+    },
+    "decision_after": "run_research_probe",
+    "api_usage": {
+      "prompt_tokens": 1223,
+      "completion_tokens": 102,
+      "total_tokens": 1325,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "audio_tokens": 0
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 0,
+        "audio_tokens": 0,
+        "accepted_prediction_tokens": 0,
+        "rejected_prediction_tokens": 0
+      }
+    }
+  }
+]
