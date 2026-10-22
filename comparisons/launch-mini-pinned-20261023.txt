@@ -1,1 +1,0 @@
-Third and final one-time mini-SWE-agent attempt after reproducing LiteLLM dependency failure. Pin stable litellm==1.105.1; budget/call/time caps unchanged. No main write.
