@@ -1,0 +1,62 @@
+name: One-shot OpenAI API probe
+
+on:
+  push:
+    branches:
+      - experiment/note-to-field-agent-v01
+    paths:
+      - field-api-probe/trigger-20261023.txt
+
+permissions:
+  contents: read
+
+jobs:
+  single-api-call:
+    if: github.event.head_commit.message == 'probe: invoke OpenAI once (2026-10-23)'
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Check repository secret and perform ONE tiny completion
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          python3 - <<'PY'
+          import json, os, sys, urllib.request, urllib.error
+          key = os.getenv("OPENAI_API_KEY", "").strip()
+          if not key:
+              print("RESULT=missing_secret; No OpenAI API request made")
+              sys.exit(2)
+          payload = {
+              "model": "gpt-4o-mini",
+              "messages": [{"role": "user", "content": 'Return the JSON object {"probe":"ok"}. No other text.'}],
+              "response_format": {"type": "json_object"},
+              "max_tokens": 40
+          }
+          request = urllib.request.Request(
+              "https://api.openai.com/v1/chat/completions",
+              data=json.dumps(payload).encode("utf-8"),
+              headers={"Content-Type": "application/json", "Authorization": "Bearer " + key},
+              method="POST")
+          try:
+              with urllib.request.urlopen(request, timeout=50) as response:
+                  data = json.load(response)
+          except urllib.error.HTTPError as error:
+              print(f"RESULT=api_http_error status={error.code}; key/token validity not confirmed")
+              sys.exit(1)
+          except Exception as error:
+              print(f"RESULT=network_error type={type(error).__name__}; key validity not confirmed")
+              sys.exit(1)
+          try:
+              actual = json.loads(data["choices"][0]["message"]["content"])
+              if actual.get("probe") != "ok":
+                  raise ValueError("Unexpected response")
+              usage = data.get("usage") or {}
+              print("RESULT=success model=" + str(data.get("model", "unknown")))
+              print("USAGE prompt_tokens={0} completion_tokens={1} total_tokens={2}".format(
+                  usage.get("prompt_tokens", "unknown"),
+                  usage.get("completion_tokens", "unknown"),
+                  usage.get("total_tokens", "unknown")))
+          except Exception as error:
+              print(f"RESULT=invalid_response type={type(error).__name__}; OpenAI answered but output validation failed")
+              sys.exit(1)
+          PY
