@@ -1,0 +1,7 @@
+Common task for Aider and mini-SWE-agent. Inspect this actual repository and its field_runs.json live record.
+
+A live GPT-4o-mini decision about multi-turn conversational unreliability recommended asking users to clarify/re-specify their request between turns. The agent instead adopted MIN_VERIFIED_SOURCES=1, a change to whether primary documents must be read. Its fixture comparison passed, but the adoption does not address the stated problem. The current program may not even have a multi-turn conversation loop.
+
+Fix the smallest genuine flaw that allowed this *specific reasoning-to-code mismatch* to be automatically adopted. Do NOT create a large approval framework or a new engine. A safe choice is not to modify behavior when the evidence does not justify an in-scope change. Preserve the ability to adopt a genuinely relevant source-verification change with a corresponding reason. Inspect code before editing, choose files yourself, add/update an offline regression test if warranted, and run existing offline unit tests.
+
+Do not access secrets or use shell commands that inspect environment variables. Do not run paid services or external network requests. Do not edit GitHub Actions, the existing note article generator, or publish changes. Report what you actually changed and did not establish.
