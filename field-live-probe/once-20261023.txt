@@ -1,1 +1,0 @@
-Authorized single 2026-10-23 live run. Research input: https://arxiv.org/abs/2505.06120. OpenAI gpt-4o-mini, maximum one call. No recurrence.
