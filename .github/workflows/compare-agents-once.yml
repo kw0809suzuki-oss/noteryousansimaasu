@@ -1,22 +1,22 @@
-name: Aider guided single corrected comparison
+name: mini-SWE-agent stable LiteLLM one-time comparison
 
 on:
   push:
     branches:
       - experiment/note-to-field-agent-v01
     paths:
-      - comparisons/launch-aider-guided-20261023.txt
+      - comparisons/launch-mini-pinned-20261023.txt
 
 permissions:
   contents: read
 
 jobs:
   compare:
-    if: "github.event.head_commit.message == 'experiment: Aider guided correction once 2026-10-23'"
+    if: "github.event.head_commit.message == 'experiment: mini stable LiteLLM once 2026-10-23'"
     strategy:
       fail-fast: false
       matrix:
-        agent: [aider-guided]
+        agent: [mini-pinned]
     runs-on: ubuntu-latest
     timeout-minutes: 12
     steps:
@@ -33,7 +33,7 @@ jobs:
           if [ "$AGENT" = "aider-guided" ]; then
             python -m pip install -q --disable-pip-version-check aider-chat
           else
-            python -m pip install -q --disable-pip-version-check mini-swe-agent 'mcp>=1,<2'
+            python -m pip install -q --disable-pip-version-check mini-swe-agent 'litellm==1.105.1'
           fi
       - name: Prepare identical, isolated repository copies
         run: |
@@ -49,6 +49,7 @@ jobs:
           AGENT: ${{ matrix.agent }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           MSWEA_CONFIGURED: "1"
+          MSWEA_MODEL_RETRY_STOP_AFTER_ATTEMPT: "2"
           MSWEA_GLOBAL_CALL_LIMIT: "7"
           MSWEA_GLOBAL_COST_LIMIT: "0.03"
           AIDER_ANALYTICS_DISABLE: "true"
@@ -130,7 +131,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: trial-${{ matrix.agent }}-corrected-20261023
+          name: trial-${{ matrix.agent }}-stable-20261023
           path: |
             ${{ runner.temp }}/report/runner-status.txt
             ${{ runner.temp }}/report/code.patch
