@@ -1,0 +1,97 @@
+name: Field agent transfer trial
+
+on:
+  pull_request:
+    paths:
+      - field_agent.py
+      - field_rules.py
+      - tests/test_field_agent.py
+      - .github/workflows/field-agent.yml
+      - FIELD_TRIAL.md
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'demo = API費用0 / live = OpenAI APIを1回呼ぶ'
+        type: choice
+        required: true
+        default: demo
+        options:
+          - demo
+          - live
+      source_url:
+        description: 'liveのみ必須: arxiv.org/abs/...'
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Python unit tests (no API)
+        run: python3 -m unittest discover -s tests -v
+      - name: Prove two-run state inheritance (no API)
+        run: |
+          mkdir -p "$RUNNER_TEMP/field-trial"
+          python3 - "$RUNNER_TEMP/field-trial/field_rules.py" <<'PY'
+          from pathlib import Path
+          import sys
+          from field_agent import rule_source
+          Path(sys.argv[1]).write_text(rule_source(1, 0), encoding='utf-8')
+          PY
+          python3 field_agent.py --mode demo --root "$RUNNER_TEMP/field-trial"
+          python3 field_agent.py --mode demo --root "$RUNNER_TEMP/field-trial"
+          python3 - "$RUNNER_TEMP/field-trial/field_runs.json" <<'PY'
+          import json, sys
+          a, b = json.load(open(sys.argv[1], encoding='utf-8'))
+          assert a['adoption'] == 'adopted'
+          assert a['decision_before'] == 'run_research_probe'
+          assert b['decision_before'] == 'read_primary_source'
+          assert b['adoption'] == 'unchanged'
+          assert a['api_usage']['total_tokens'] == 0
+          print('Observed: adopted rule changed the next real run, 0 model tokens')
+          PY
+
+  manual:
+    # Not invoked by PRs. No scheduled runs, and never writes to main.
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run explicitly selected mode
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          FIELD_MODE: ${{ inputs.mode }}
+          SOURCE_URL: ${{ inputs.source_url }}
+        run: |
+          if [ "$FIELD_MODE" = live ]; then
+            if [ -z "$SOURCE_URL" ]; then echo 'live requires an arxiv source URL' >&2; exit 1; fi
+            python3 field_agent.py --mode live --source-url "$SOURCE_URL"
+          else
+            python3 field_agent.py --mode demo
+          fi
+      - name: Upload experiment record
+        uses: actions/upload-artifact@v4
+        with:
+          name: field-trial-record
+          path: |
+            field_rules.py
+            field_runs.json
+          retention-days: 7
+      - name: Persist tested change on experiment branch only
+        if: startsWith(github.ref_name, 'experiment/')
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add field_rules.py field_runs.json
+          if ! git diff --cached --quiet; then
+            git commit -m 'Record field agent trial and active rule'
+            git push
+          fi
