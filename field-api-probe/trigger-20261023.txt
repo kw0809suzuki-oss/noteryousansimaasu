@@ -1,0 +1,1 @@
+Single OpenAI Chat Completions gpt-4o-mini health check, authorized once on 2026-10-23. Do not reuse this trigger.
