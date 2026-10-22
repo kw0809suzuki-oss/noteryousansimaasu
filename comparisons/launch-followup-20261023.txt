@@ -1,1 +1,0 @@
-Follow-up only: mini-swe agent with mcp dependency fixed; Aider with explicit target files. Same task, zero main write, max tool time 200 seconds each.
