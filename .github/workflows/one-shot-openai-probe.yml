@@ -12,7 +12,7 @@ permissions:
 
 jobs:
   single-api-call:
-    if: github.event.head_commit.message == 'probe: invoke OpenAI once (2026-10-23)'
+    if: "github.event.head_commit.message == 'probe: invoke OpenAI once (2026-10-23)'"
     runs-on: ubuntu-latest
     timeout-minutes: 3
     steps:
