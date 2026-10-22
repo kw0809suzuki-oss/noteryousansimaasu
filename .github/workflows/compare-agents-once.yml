@@ -1,22 +1,22 @@
-name: Aider guided vs mini repaired followup trial
+name: Aider guided single corrected comparison
 
 on:
   push:
     branches:
       - experiment/note-to-field-agent-v01
     paths:
-      - comparisons/launch-followup-20261023.txt
+      - comparisons/launch-aider-guided-20261023.txt
 
 permissions:
   contents: read
 
 jobs:
   compare:
-    if: "github.event.head_commit.message == 'experiment: comparison followup 2026-10-23'"
+    if: "github.event.head_commit.message == 'experiment: Aider guided correction once 2026-10-23'"
     strategy:
       fail-fast: false
       matrix:
-        agent: [aider-guided, mini-fixed]
+        agent: [aider-guided]
     runs-on: ubuntu-latest
     timeout-minutes: 12
     steps:
@@ -57,7 +57,7 @@ jobs:
           cd "$RUNNER_TEMP/work"
           START="$(date +%s)"
           set +e
-          if [ "$AGENT" = "aider" ]; then
+          if [ "$AGENT" = "aider-guided" ]; then
             timeout --kill-after=8s 200s aider --model gpt-4o-mini --yes --no-auto-commits --no-auto-lint --no-auto-test --no-stream --message-file comparisons/shared-task-20261023.txt field_agent.py tests/test_field_agent.py > "$RUNNER_TEMP/report/raw.log" 2>&1
           else
             timeout --kill-after=8s 200s mini -m openai/gpt-4o-mini -y --exit-immediately -t "$(cat comparisons/shared-task-20261023.txt)" -c mini.yaml -c agent.step_limit=7 -c agent.wall_time_limit_seconds=185 -c agent.cost_limit=0.03 -o "$RUNNER_TEMP/report/mini-traj.json" > "$RUNNER_TEMP/report/raw.log" 2>&1
@@ -130,7 +130,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: trial-${{ matrix.agent }}-followup-20261023
+          name: trial-${{ matrix.agent }}-corrected-20261023
           path: |
             ${{ runner.temp }}/report/runner-status.txt
             ${{ runner.temp }}/report/code.patch
